@@ -115,10 +115,25 @@ class ScreenScannerApp:
         self.projected_prize_var = tk.StringVar()
         self.current_wages_var = tk.StringVar()
 
-        ttk.Entry(budget_frame, textvariable=self.current_balance_var, width=18).grid(row=0, column=1, sticky=(tk.W, tk.E), padx=(5, 15))
-        ttk.Entry(budget_frame, textvariable=self.prior_balance_var, width=18).grid(row=1, column=1, sticky=(tk.W, tk.E), padx=(5, 15))
-        ttk.Entry(budget_frame, textvariable=self.projected_prize_var, width=18).grid(row=0, column=3, sticky=(tk.W, tk.E), padx=(5, 0))
-        ttk.Entry(budget_frame, textvariable=self.current_wages_var, width=18).grid(row=1, column=3, sticky=(tk.W, tk.E), padx=(5, 0))
+        self.current_balance_entry = ttk.Entry(budget_frame, textvariable=self.current_balance_var, width=18)
+        self.current_balance_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=(5, 15))
+        self.prior_balance_entry = ttk.Entry(budget_frame, textvariable=self.prior_balance_var, width=18)
+        self.prior_balance_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), padx=(5, 15))
+        self.projected_prize_entry = ttk.Entry(budget_frame, textvariable=self.projected_prize_var, width=18)
+        self.projected_prize_entry.grid(row=0, column=3, sticky=(tk.W, tk.E), padx=(5, 0))
+        self.current_wages_entry = ttk.Entry(budget_frame, textvariable=self.current_wages_var, width=18)
+        self.current_wages_entry.grid(row=1, column=3, sticky=(tk.W, tk.E), padx=(5, 0))
+
+        self._money_entry_map = {}
+        self._money_trace_lock = False
+        for entry, var in (
+            (self.current_balance_entry, self.current_balance_var),
+            (self.prior_balance_entry, self.prior_balance_var),
+            (self.projected_prize_entry, self.projected_prize_var),
+            (self.current_wages_entry, self.current_wages_var),
+        ):
+            self._money_entry_map[var] = entry
+            var.trace_add("write", lambda *args, v=var: self._format_money_live(v))
 
         calc_btn = ttk.Button(budget_frame, text="Calculate", command=self.calculate_wage_budget)
         calc_btn.grid(row=2, column=0, columnspan=4, pady=(8, 6))
@@ -176,8 +191,54 @@ class ScreenScannerApp:
             return 0.0
 
     def _format_money(self, value):
-        """Format money value with commas and 2 decimals."""
+        """Format money value with commas and sensible decimals."""
+        if float(value).is_integer():
+            return f"{value:,.0f}"
         return f"{value:,.2f}"
+
+    def _format_money_var(self, var):
+        """Format a money StringVar in-place with commas."""
+        raw = (var.get() or "").strip()
+        if raw == "":
+            return
+        value = self._parse_money_input(raw)
+        var.set(self._format_money(value))
+
+    def _normalize_money_input(self, raw):
+        """Keep only digits, one decimal point, and leading minus."""
+        cleaned = re.sub(r'[^0-9.\-]', '', raw)
+        if not cleaned:
+            return ""
+        negative = cleaned.startswith('-')
+        cleaned = cleaned.replace('-', '')
+        if cleaned.count('.') > 1:
+            parts = cleaned.split('.')
+            cleaned = parts[0] + '.' + ''.join(parts[1:])
+        cleaned = ('-' if negative else '') + cleaned
+        return cleaned
+
+    def _format_money_live(self, var):
+        """Live format input with commas while typing."""
+        if self._money_trace_lock:
+            return
+        raw = var.get()
+        if raw is None:
+            return
+        normalized = self._normalize_money_input(raw)
+        if normalized in ("", "-", "."):
+            return
+        value = self._parse_money_input(normalized)
+        formatted = self._format_money(value)
+        if formatted == raw:
+            return
+        self._money_trace_lock = True
+        try:
+            var.set(formatted)
+            entry = self._money_entry_map.get(var)
+            if entry is not None:
+                entry.icursor(tk.END)
+        finally:
+            self._money_trace_lock = False
 
     def calculate_wage_budget(self):
         """Calculate wage budget estimates for a 25-player squad."""
@@ -190,7 +251,7 @@ class ScreenScannerApp:
         total_available = year_profit + projected_prize - current_wages
 
         if total_available < 0:
-            total_available = 0.0
+            total_available = current_wages * 0.75
 
         avg_per_player = total_available / 25 if total_available else 0.0
         max_per_player = avg_per_player * 2
