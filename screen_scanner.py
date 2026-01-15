@@ -108,12 +108,13 @@ class ScreenScannerApp:
         ttk.Label(budget_frame, text="Current balance:").grid(row=0, column=0, sticky=tk.W)
         ttk.Label(budget_frame, text="Balance a year ago:").grid(row=1, column=0, sticky=tk.W)
         ttk.Label(budget_frame, text="Projected prize money:").grid(row=0, column=2, sticky=tk.W)
-        ttk.Label(budget_frame, text="Current wages (annual):").grid(row=1, column=2, sticky=tk.W)
+        ttk.Label(budget_frame, text="Current wages:").grid(row=1, column=2, sticky=tk.W)
 
         self.current_balance_var = tk.StringVar()
         self.prior_balance_var = tk.StringVar()
         self.projected_prize_var = tk.StringVar()
         self.current_wages_var = tk.StringVar()
+        self.wage_period_var = tk.StringVar(value="annual")
 
         self.current_balance_entry = ttk.Entry(budget_frame, textvariable=self.current_balance_var, width=18)
         self.current_balance_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=(5, 15))
@@ -123,6 +124,25 @@ class ScreenScannerApp:
         self.projected_prize_entry.grid(row=0, column=3, sticky=(tk.W, tk.E), padx=(5, 0))
         self.current_wages_entry = ttk.Entry(budget_frame, textvariable=self.current_wages_var, width=18)
         self.current_wages_entry.grid(row=1, column=3, sticky=(tk.W, tk.E), padx=(5, 0))
+
+        wage_period_label = ttk.Label(budget_frame, text="Wage period:")
+        wage_period_label.grid(row=2, column=2, sticky=tk.W, pady=(4, 0))
+        wage_period_frame = ttk.Frame(budget_frame)
+        wage_period_frame.grid(row=2, column=3, sticky=tk.W, pady=(4, 0))
+        ttk.Radiobutton(
+            wage_period_frame,
+            text="Weekly",
+            variable=self.wage_period_var,
+            value="weekly",
+            command=self.calculate_wage_budget,
+        ).pack(side=tk.LEFT)
+        ttk.Radiobutton(
+            wage_period_frame,
+            text="Annual",
+            variable=self.wage_period_var,
+            value="annual",
+            command=self.calculate_wage_budget,
+        ).pack(side=tk.LEFT, padx=(8, 0))
 
         self._money_trace_lock = False
         for entry, var in (
@@ -134,17 +154,25 @@ class ScreenScannerApp:
             var.trace_add("write", lambda *args, v=var, e=entry: self._format_money_live(v, e))
 
         calc_btn = ttk.Button(budget_frame, text="Calculate", command=self.calculate_wage_budget)
-        calc_btn.grid(row=2, column=0, columnspan=4, pady=(8, 6))
+        calc_btn.grid(row=3, column=0, columnspan=4, pady=(8, 6))
 
+        self.current_balance_display_var = tk.StringVar(value="Current balance: -")
+        self.expected_balance_var = tk.StringVar(value="Expected balance (1y): -")
         self.profit_var = tk.StringVar(value="Year profit: -")
         self.total_budget_var = tk.StringVar(value="Available for 25 players: -")
+        self.current_wages_display_var = tk.StringVar(value="Current wages: -")
+        self.expected_wages_var = tk.StringVar(value="Expected wages budget: -")
         self.avg_spend_var = tk.StringVar(value="Average per player: -")
         self.max_spend_var = tk.StringVar(value="Max per player (2x avg): -")
 
-        ttk.Label(budget_frame, textvariable=self.profit_var).grid(row=3, column=0, columnspan=2, sticky=tk.W)
-        ttk.Label(budget_frame, textvariable=self.total_budget_var).grid(row=3, column=2, columnspan=2, sticky=tk.W)
-        ttk.Label(budget_frame, textvariable=self.avg_spend_var).grid(row=4, column=0, columnspan=2, sticky=tk.W)
-        ttk.Label(budget_frame, textvariable=self.max_spend_var).grid(row=4, column=2, columnspan=2, sticky=tk.W)
+        ttk.Label(budget_frame, textvariable=self.current_balance_display_var).grid(row=4, column=0, columnspan=2, sticky=tk.W)
+        ttk.Label(budget_frame, textvariable=self.expected_balance_var).grid(row=4, column=2, columnspan=2, sticky=tk.W)
+        ttk.Label(budget_frame, textvariable=self.profit_var).grid(row=5, column=0, columnspan=2, sticky=tk.W)
+        ttk.Label(budget_frame, textvariable=self.total_budget_var).grid(row=5, column=2, columnspan=2, sticky=tk.W)
+        ttk.Label(budget_frame, textvariable=self.current_wages_display_var).grid(row=6, column=0, columnspan=2, sticky=tk.W)
+        ttk.Label(budget_frame, textvariable=self.expected_wages_var).grid(row=6, column=2, columnspan=2, sticky=tk.W)
+        ttk.Label(budget_frame, textvariable=self.avg_spend_var).grid(row=7, column=0, columnspan=2, sticky=tk.W)
+        ttk.Label(budget_frame, textvariable=self.max_spend_var).grid(row=7, column=2, columnspan=2, sticky=tk.W)
 
         # Preview frame
         preview_label = ttk.Label(main_frame, text="Preview:", font=("Arial", 10, "bold"))
@@ -242,19 +270,41 @@ class ScreenScannerApp:
         current_balance = self._parse_money_input(self.current_balance_var.get())
         prior_balance = self._parse_money_input(self.prior_balance_var.get())
         projected_prize = self._parse_money_input(self.projected_prize_var.get())
-        current_wages = self._parse_money_input(self.current_wages_var.get())
+        current_wages_input = self._parse_money_input(self.current_wages_var.get())
+        if self.wage_period_var.get() == "weekly":
+            current_wages_annual = current_wages_input * 52
+        else:
+            current_wages_annual = current_wages_input
+        current_wages_weekly = current_wages_annual / 52 if current_wages_annual else 0.0
 
         year_profit = current_balance - prior_balance
-        total_available = year_profit + projected_prize - current_wages
+        total_available = year_profit + projected_prize - current_wages_annual
 
         if total_available < 0:
-            total_available = current_wages * 0.75
+            total_available = current_wages_annual * 0.75
 
         avg_per_player = total_available / 25 if total_available else 0.0
         max_per_player = avg_per_player * 2
 
+        expected_balance = current_balance + year_profit + projected_prize - current_wages_annual
+        expected_wages_weekly = total_available / 52 if total_available else 0.0
+
+        self.current_balance_display_var.set(
+            f"Current balance: {self._format_money(current_balance)}"
+        )
+        self.expected_balance_var.set(
+            f"Expected balance (1y): {self._format_money(expected_balance)}"
+        )
         self.profit_var.set(f"Year profit: {self._format_money(year_profit)}")
         self.total_budget_var.set(f"Available for 25 players: {self._format_money(total_available)}")
+        self.current_wages_display_var.set(
+            f"Current wages: {self._format_money(current_wages_annual)} "
+            f"(weekly {self._format_money(current_wages_weekly)})"
+        )
+        self.expected_wages_var.set(
+            f"Expected wages budget: {self._format_money(total_available)} "
+            f"(weekly {self._format_money(expected_wages_weekly)})"
+        )
         self.avg_spend_var.set(f"Average per player: {self._format_money(avg_per_player)}")
         self.max_spend_var.set(f"Max per player (2x avg): {self._format_money(max_per_player)}")
     
