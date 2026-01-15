@@ -124,7 +124,6 @@ class ScreenScannerApp:
         self.current_wages_entry = ttk.Entry(budget_frame, textvariable=self.current_wages_var, width=18)
         self.current_wages_entry.grid(row=1, column=3, sticky=(tk.W, tk.E), padx=(5, 0))
 
-        self._money_entry_map = {}
         self._money_trace_lock = False
         for entry, var in (
             (self.current_balance_entry, self.current_balance_var),
@@ -132,8 +131,7 @@ class ScreenScannerApp:
             (self.projected_prize_entry, self.projected_prize_var),
             (self.current_wages_entry, self.current_wages_var),
         ):
-            self._money_entry_map[var] = entry
-            var.trace_add("write", lambda *args, v=var: self._format_money_live(v))
+            var.trace_add("write", lambda *args, v=var, e=entry: self._format_money_live(v, e))
 
         calc_btn = ttk.Button(budget_frame, text="Calculate", command=self.calculate_wage_budget)
         calc_btn.grid(row=2, column=0, columnspan=4, pady=(8, 6))
@@ -217,7 +215,7 @@ class ScreenScannerApp:
         cleaned = ('-' if negative else '') + cleaned
         return cleaned
 
-    def _format_money_live(self, var):
+    def _format_money_live(self, var, entry):
         """Live format input with commas while typing."""
         if self._money_trace_lock:
             return
@@ -234,7 +232,6 @@ class ScreenScannerApp:
         self._money_trace_lock = True
         try:
             var.set(formatted)
-            entry = self._money_entry_map.get(var)
             if entry is not None:
                 entry.icursor(tk.END)
         finally:
