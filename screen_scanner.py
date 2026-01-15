@@ -268,26 +268,46 @@ class ScreenScannerApp:
     def calculate_wage_budget(self):
         """Calculate wage budget estimates for a 25-player squad."""
         current_balance = self._parse_money_input(self.current_balance_var.get())
-        prior_balance = self._parse_money_input(self.prior_balance_var.get())
+        prior_raw = (self.prior_balance_var.get() or "").strip()
+        if prior_raw == "":
+            prior_balance = current_balance
+        else:
+            prior_balance = self._parse_money_input(prior_raw)
         projected_prize = self._parse_money_input(self.projected_prize_var.get())
         current_wages_input = self._parse_money_input(self.current_wages_var.get())
-        if self.wage_period_var.get() == "weekly":
+        wage_period = self.wage_period_var.get()
+        if wage_period == "weekly":
             current_wages_annual = current_wages_input * 52
         else:
             current_wages_annual = current_wages_input
         current_wages_weekly = current_wages_annual / 52 if current_wages_annual else 0.0
 
         year_profit = current_balance - prior_balance
-        total_available = year_profit + projected_prize - current_wages_annual
+        base_budget = current_wages_annual + year_profit + projected_prize
+        minimum_budget = current_wages_annual * 0.75
+        if base_budget < minimum_budget:
+            base_budget = minimum_budget
 
-        if total_available < 0:
-            total_available = current_wages_annual * 0.75
+        balance_contribution = max(0.0, current_balance) * 0.20
+        total_available = base_budget + balance_contribution
 
         avg_per_player = total_available / 25 if total_available else 0.0
         max_per_player = avg_per_player * 2
 
-        expected_balance = current_balance + year_profit + projected_prize - current_wages_annual
+        expected_balance = (
+            current_balance
+            + year_profit
+            + projected_prize
+            - (total_available - current_wages_annual)
+        )
         expected_wages_weekly = total_available / 52 if total_available else 0.0
+
+        if wage_period == "weekly":
+            display_factor = 1 / 52
+            period_label = "weekly"
+        else:
+            display_factor = 1
+            period_label = "annual"
 
         self.current_balance_display_var.set(
             f"Current balance: {self._format_money(current_balance)}"
@@ -296,17 +316,24 @@ class ScreenScannerApp:
             f"Expected balance (1y): {self._format_money(expected_balance)}"
         )
         self.profit_var.set(f"Year profit: {self._format_money(year_profit)}")
-        self.total_budget_var.set(f"Available for 25 players: {self._format_money(total_available)}")
+        self.total_budget_var.set(
+            f"Available for 25 players ({period_label}): "
+            f"{self._format_money(total_available * display_factor)}"
+        )
         self.current_wages_display_var.set(
-            f"Current wages: {self._format_money(current_wages_annual)} "
-            f"(weekly {self._format_money(current_wages_weekly)})"
+            f"Current wages ({period_label}): "
+            f"{self._format_money((current_wages_weekly if wage_period == 'weekly' else current_wages_annual))}"
         )
         self.expected_wages_var.set(
-            f"Expected wages budget: {self._format_money(total_available)} "
-            f"(weekly {self._format_money(expected_wages_weekly)})"
+            f"Expected wages budget ({period_label}): "
+            f"{self._format_money((expected_wages_weekly if wage_period == 'weekly' else total_available))}"
         )
-        self.avg_spend_var.set(f"Average per player: {self._format_money(avg_per_player)}")
-        self.max_spend_var.set(f"Max per player (2x avg): {self._format_money(max_per_player)}")
+        self.avg_spend_var.set(
+            f"Average per player ({period_label}): {self._format_money(avg_per_player * display_factor)}"
+        )
+        self.max_spend_var.set(
+            f"Max per player (2x avg, {period_label}): {self._format_money(max_per_player * display_factor)}"
+        )
     
     def check_tesseract(self):
         """Check if Tesseract OCR is installed"""
