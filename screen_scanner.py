@@ -99,35 +99,106 @@ class ScreenScannerApp:
                                      state=tk.DISABLED)
         self.export_btn.pack(side=tk.LEFT, padx=5)
         
+        # Wage budget estimator frame
+        budget_frame = ttk.LabelFrame(main_frame, text="Wage Budget Estimator", padding="10")
+        budget_frame.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 10))
+        budget_frame.columnconfigure(1, weight=1)
+        budget_frame.columnconfigure(3, weight=1)
+
+        ttk.Label(budget_frame, text="Current balance:").grid(row=0, column=0, sticky=tk.W)
+        ttk.Label(budget_frame, text="Balance a year ago:").grid(row=1, column=0, sticky=tk.W)
+        ttk.Label(budget_frame, text="Projected prize money:").grid(row=0, column=2, sticky=tk.W)
+        ttk.Label(budget_frame, text="Current wages (annual):").grid(row=1, column=2, sticky=tk.W)
+
+        self.current_balance_var = tk.StringVar()
+        self.prior_balance_var = tk.StringVar()
+        self.projected_prize_var = tk.StringVar()
+        self.current_wages_var = tk.StringVar()
+
+        ttk.Entry(budget_frame, textvariable=self.current_balance_var, width=18).grid(row=0, column=1, sticky=(tk.W, tk.E), padx=(5, 15))
+        ttk.Entry(budget_frame, textvariable=self.prior_balance_var, width=18).grid(row=1, column=1, sticky=(tk.W, tk.E), padx=(5, 15))
+        ttk.Entry(budget_frame, textvariable=self.projected_prize_var, width=18).grid(row=0, column=3, sticky=(tk.W, tk.E), padx=(5, 0))
+        ttk.Entry(budget_frame, textvariable=self.current_wages_var, width=18).grid(row=1, column=3, sticky=(tk.W, tk.E), padx=(5, 0))
+
+        calc_btn = ttk.Button(budget_frame, text="Calculate", command=self.calculate_wage_budget)
+        calc_btn.grid(row=2, column=0, columnspan=4, pady=(8, 6))
+
+        self.profit_var = tk.StringVar(value="Year profit: -")
+        self.total_budget_var = tk.StringVar(value="Available for 25 players: -")
+        self.avg_spend_var = tk.StringVar(value="Average per player: -")
+        self.max_spend_var = tk.StringVar(value="Max per player (2x avg): -")
+
+        ttk.Label(budget_frame, textvariable=self.profit_var).grid(row=3, column=0, columnspan=2, sticky=tk.W)
+        ttk.Label(budget_frame, textvariable=self.total_budget_var).grid(row=3, column=2, columnspan=2, sticky=tk.W)
+        ttk.Label(budget_frame, textvariable=self.avg_spend_var).grid(row=4, column=0, columnspan=2, sticky=tk.W)
+        ttk.Label(budget_frame, textvariable=self.max_spend_var).grid(row=4, column=2, columnspan=2, sticky=tk.W)
+
         # Preview frame
         preview_label = ttk.Label(main_frame, text="Preview:", font=("Arial", 10, "bold"))
-        preview_label.grid(row=3, column=0, columnspan=2, sticky=tk.W, pady=(20, 5))
+        preview_label.grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=(10, 5))
         
         # Canvas for image preview
         self.canvas = tk.Canvas(main_frame, width=750, height=400, bg="white", 
                                relief=tk.SUNKEN, borderwidth=2)
-        self.canvas.grid(row=4, column=0, columnspan=2, pady=10)
+        self.canvas.grid(row=5, column=0, columnspan=2, pady=10)
         
         # Scrollbar for canvas
         scrollbar = ttk.Scrollbar(main_frame, orient=tk.VERTICAL, command=self.canvas.yview)
-        scrollbar.grid(row=4, column=2, sticky=(tk.N, tk.S))
+        scrollbar.grid(row=5, column=2, sticky=(tk.N, tk.S))
         self.canvas.configure(yscrollcommand=scrollbar.set)
         
         # Status bar
         self.status_var = tk.StringVar(value="Ready - Click 'Select Area' to begin")
         status_bar = ttk.Label(main_frame, textvariable=self.status_var, 
                               relief=tk.SUNKEN, anchor=tk.W)
-        status_bar.grid(row=5, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 0))
+        status_bar.grid(row=6, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 0))
         
         # Progress bar
         self.progress = ttk.Progressbar(main_frame, mode='indeterminate')
-        self.progress.grid(row=6, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
+        self.progress.grid(row=7, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
         
         # Configure grid weights
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(0, weight=1)
-        main_frame.rowconfigure(4, weight=1)
+        main_frame.rowconfigure(5, weight=1)
+
+    def _parse_money_input(self, value):
+        """Parse money input allowing commas and currency symbols."""
+        if value is None:
+            return 0.0
+        cleaned = re.sub(r'[^0-9.\-]', '', str(value))
+        if cleaned in ('', '-', '.', '-.'):
+            return 0.0
+        try:
+            return float(cleaned)
+        except ValueError:
+            return 0.0
+
+    def _format_money(self, value):
+        """Format money value with commas and 2 decimals."""
+        return f"{value:,.2f}"
+
+    def calculate_wage_budget(self):
+        """Calculate wage budget estimates for a 25-player squad."""
+        current_balance = self._parse_money_input(self.current_balance_var.get())
+        prior_balance = self._parse_money_input(self.prior_balance_var.get())
+        projected_prize = self._parse_money_input(self.projected_prize_var.get())
+        current_wages = self._parse_money_input(self.current_wages_var.get())
+
+        year_profit = current_balance - prior_balance
+        total_available = year_profit + projected_prize - current_wages
+
+        if total_available < 0:
+            total_available = 0.0
+
+        avg_per_player = total_available / 25 if total_available else 0.0
+        max_per_player = avg_per_player * 2
+
+        self.profit_var.set(f"Year profit: {self._format_money(year_profit)}")
+        self.total_budget_var.set(f"Available for 25 players: {self._format_money(total_available)}")
+        self.avg_spend_var.set(f"Average per player: {self._format_money(avg_per_player)}")
+        self.max_spend_var.set(f"Max per player (2x avg): {self._format_money(max_per_player)}")
     
     def check_tesseract(self):
         """Check if Tesseract OCR is installed"""
