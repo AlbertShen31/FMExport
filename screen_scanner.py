@@ -64,18 +64,29 @@ class ScreenScannerApp:
                                font=("Arial", 16, "bold"))
         title_label.grid(row=0, column=0, columnspan=2, pady=(0, 20))
         
+        # Tabs
+        notebook = ttk.Notebook(main_frame)
+        notebook.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S))
+
+        scan_tab = ttk.Frame(notebook, padding="10")
+        budget_tab = ttk.Frame(notebook, padding="10")
+        notebook.add(scan_tab, text="Screen Scan")
+        notebook.add(budget_tab, text="Wage Budget")
+
         # Instructions
-        instructions = ttk.Label(main_frame, 
-                               text="1. Click 'Select Window' to choose a window, or 'Select Area' for manual selection\n"
-                                    "2. Preview and adjust if needed\n"
-                                    "3. Click 'Extract Data' to process\n"
-                                    "4. Click 'Export to CSV' to save",
-                               justify=tk.LEFT)
-        instructions.grid(row=1, column=0, columnspan=2, pady=(0, 20))
+        instructions = ttk.Label(
+            scan_tab,
+            text="1. Click 'Select Window' to choose a window, or 'Select Area' for manual selection\n"
+                 "2. Preview and adjust if needed\n"
+                 "3. Click 'Extract Data' to process\n"
+                 "4. Click 'Export to CSV' to save",
+            justify=tk.LEFT,
+        )
+        instructions.grid(row=0, column=0, columnspan=2, pady=(0, 20), sticky=tk.W)
         
         # Buttons frame
-        button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=2, column=0, columnspan=2, pady=10)
+        button_frame = ttk.Frame(scan_tab)
+        button_frame.grid(row=1, column=0, columnspan=2, pady=10)
         
         # Select Window button
         self.select_window_btn = ttk.Button(button_frame, text="Select Window", 
@@ -100,8 +111,8 @@ class ScreenScannerApp:
         self.export_btn.pack(side=tk.LEFT, padx=5)
         
         # Wage budget estimator frame
-        budget_frame = ttk.LabelFrame(main_frame, text="Wage Budget Estimator", padding="10")
-        budget_frame.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 10))
+        budget_frame = ttk.LabelFrame(budget_tab, text="Wage Budget Estimator", padding="10")
+        budget_frame.grid(row=0, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
         budget_frame.columnconfigure(1, weight=1)
         budget_frame.columnconfigure(3, weight=1)
 
@@ -195,34 +206,37 @@ class ScreenScannerApp:
         ttk.Label(budget_frame, textvariable=self.max_spend_var).grid(row=9, column=0, columnspan=2, sticky=tk.W)
 
         # Preview frame
-        preview_label = ttk.Label(main_frame, text="Preview:", font=("Arial", 10, "bold"))
-        preview_label.grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=(10, 5))
+        preview_label = ttk.Label(scan_tab, text="Preview:", font=("Arial", 10, "bold"))
+        preview_label.grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=(10, 5))
         
         # Canvas for image preview
-        self.canvas = tk.Canvas(main_frame, width=750, height=400, bg="white", 
+        self.canvas = tk.Canvas(scan_tab, width=750, height=400, bg="white", 
                                relief=tk.SUNKEN, borderwidth=2)
-        self.canvas.grid(row=5, column=0, columnspan=2, pady=10)
+        self.canvas.grid(row=3, column=0, columnspan=2, pady=10)
         
         # Scrollbar for canvas
-        scrollbar = ttk.Scrollbar(main_frame, orient=tk.VERTICAL, command=self.canvas.yview)
-        scrollbar.grid(row=5, column=2, sticky=(tk.N, tk.S))
+        scrollbar = ttk.Scrollbar(scan_tab, orient=tk.VERTICAL, command=self.canvas.yview)
+        scrollbar.grid(row=3, column=2, sticky=(tk.N, tk.S))
         self.canvas.configure(yscrollcommand=scrollbar.set)
         
         # Status bar
         self.status_var = tk.StringVar(value="Ready - Click 'Select Area' to begin")
-        status_bar = ttk.Label(main_frame, textvariable=self.status_var, 
+        status_bar = ttk.Label(scan_tab, textvariable=self.status_var, 
                               relief=tk.SUNKEN, anchor=tk.W)
-        status_bar.grid(row=6, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 0))
+        status_bar.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 0))
         
         # Progress bar
-        self.progress = ttk.Progressbar(main_frame, mode='indeterminate')
-        self.progress.grid(row=7, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
+        self.progress = ttk.Progressbar(scan_tab, mode='indeterminate')
+        self.progress.grid(row=5, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
         
         # Configure grid weights
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(0, weight=1)
-        main_frame.rowconfigure(5, weight=1)
+        main_frame.rowconfigure(1, weight=1)
+        scan_tab.columnconfigure(0, weight=1)
+        scan_tab.rowconfigure(3, weight=1)
+        budget_tab.columnconfigure(0, weight=1)
 
     def _parse_money_input(self, value):
         """Parse money input allowing commas and currency symbols."""
