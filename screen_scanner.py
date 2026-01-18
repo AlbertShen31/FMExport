@@ -109,6 +109,11 @@ class ScreenScannerApp:
                                      command=self.export_csv,
                                      state=tk.DISABLED)
         self.export_btn.pack(side=tk.LEFT, padx=5)
+
+        # Upload Screenshot button
+        self.upload_btn = ttk.Button(button_frame, text="Upload Screenshot",
+                                     command=self.upload_screenshot)
+        self.upload_btn.pack(side=tk.LEFT, padx=5)
         
         # Wage budget estimator frame
         budget_frame = ttk.LabelFrame(budget_tab, text="Wage Budget Estimator", padding="10")
@@ -537,6 +542,27 @@ class ScreenScannerApp:
                 print(f"Error getting windows on Windows: {e}")
         
         return windows
+
+    def upload_screenshot(self):
+        """Load a screenshot from disk."""
+        filename = filedialog.askopenfilename(
+            title="Select Screenshot",
+            filetypes=[
+                ("Image files", "*.png *.jpg *.jpeg *.bmp *.tiff *.webp"),
+                ("All files", "*.*"),
+            ],
+        )
+        if not filename:
+            return
+        try:
+            img = Image.open(filename).convert("RGB")
+            self.captured_image = img
+            self.display_preview(img)
+            self.extract_btn.config(state=tk.NORMAL)
+            self.status_var.set(f"Screenshot loaded: {os.path.basename(filename)}")
+        except Exception as e:
+            messagebox.showerror("Load Error", f"Failed to load image:\n{str(e)}")
+            self.status_var.set("Error loading screenshot")
     
     def select_window(self):
         """Show window selection dialog"""
