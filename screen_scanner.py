@@ -86,34 +86,36 @@ class ScreenScannerApp:
         
         # Buttons frame
         button_frame = ttk.Frame(scan_tab)
-        button_frame.grid(row=1, column=0, columnspan=2, pady=10)
+        button_frame.grid(row=1, column=0, columnspan=2, pady=10, sticky=(tk.W, tk.E))
+        for idx in range(5):
+            button_frame.columnconfigure(idx, weight=1, uniform="scan_buttons")
         
         # Select Window button
-        self.select_window_btn = ttk.Button(button_frame, text="Select Window", 
+        self.select_window_btn = ttk.Button(button_frame, text="Select Window",
                                            command=self.select_window)
-        self.select_window_btn.pack(side=tk.LEFT, padx=5)
+        self.select_window_btn.grid(row=0, column=0, padx=5, sticky=(tk.W, tk.E))
         
         # Select Area button
-        self.select_btn = ttk.Button(button_frame, text="Select Area to Scan", 
+        self.select_btn = ttk.Button(button_frame, text="Select Area to Scan",
                                      command=self.select_area)
-        self.select_btn.pack(side=tk.LEFT, padx=5)
+        self.select_btn.grid(row=0, column=1, padx=5, sticky=(tk.W, tk.E))
         
         # Extract Data button
-        self.extract_btn = ttk.Button(button_frame, text="Extract Data", 
+        self.extract_btn = ttk.Button(button_frame, text="Extract Data",
                                       command=self.extract_data,
                                       state=tk.DISABLED)
-        self.extract_btn.pack(side=tk.LEFT, padx=5)
+        self.extract_btn.grid(row=0, column=2, padx=5, sticky=(tk.W, tk.E))
         
         # Export CSV button
-        self.export_btn = ttk.Button(button_frame, text="Export to CSV", 
+        self.export_btn = ttk.Button(button_frame, text="Export to CSV",
                                      command=self.export_csv,
                                      state=tk.DISABLED)
-        self.export_btn.pack(side=tk.LEFT, padx=5)
+        self.export_btn.grid(row=0, column=3, padx=5, sticky=(tk.W, tk.E))
 
         # Upload Screenshot button
         self.upload_btn = ttk.Button(button_frame, text="Upload Screenshot",
                                      command=self.upload_screenshot)
-        self.upload_btn.pack(side=tk.LEFT, padx=5)
+        self.upload_btn.grid(row=0, column=4, padx=5, sticky=(tk.W, tk.E))
         
         # Wage budget estimator frame
         budget_frame = ttk.LabelFrame(budget_tab, text="Wage Budget Estimator", padding="10")
@@ -240,6 +242,7 @@ class ScreenScannerApp:
         main_frame.columnconfigure(0, weight=1)
         main_frame.rowconfigure(1, weight=1)
         scan_tab.columnconfigure(0, weight=1)
+        scan_tab.columnconfigure(1, weight=1)
         scan_tab.rowconfigure(3, weight=1)
         budget_tab.columnconfigure(0, weight=1)
 
