@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>FM26ExportProbe</AssemblyName>
+    <RootNamespace>FM26ExportProbe</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <!--
+    Build against BepInEx core DLLs from a local FM26 install when available.
+    Set BEPINEX_LIBS to: <FM26.app>/Contents/MacOS/BepInEx/core
+  -->
+  <PropertyGroup Condition="'$(BEPINEX_LIBS)' != ''">
+    <BepInExCorePath>$(BEPINEX_LIBS)/BepInEx.Core.dll</BepInExCorePath>
+    <BepInExUnityPath>$(BEPINEX_LIBS)/BepInEx.Unity.IL2CPP.dll</BepInExUnityPath>
+    <BepInExInteropPath>$(BEPINEX_LIBS)/Il2CppInterop.Runtime.dll</BepInExInteropPath>
+    <UnityEnginePath>$(BEPINEX_LIBS)/UnityEngine.CoreModule.dll</UnityEnginePath>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(BEPINEX_LIBS)' != '' and Exists('$(BepInExCorePath)')">
+    <Reference Include="BepInEx.Core">
+      <HintPath>$(BepInExCorePath)</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BepInEx.Unity.IL2CPP">
+      <HintPath>$(BepInExUnityPath)</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>$(BepInExInteropPath)</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(UnityEnginePath)</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Fallback NuGet refs for skeleton validation when BEPINEX_LIBS is unset -->
+  <ItemGroup Condition="'$(BEPINEX_LIBS)' == ''">
+    <PackageReference Include="BepInEx.Core" Version="6.0.0-be.738" />
+    <PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.738" />
+  </ItemGroup>
+</Project>
