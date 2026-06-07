@@ -2,7 +2,7 @@
 
 A **macOS-first** Python CLI that converts Football Manager 2026 **Web Page** exports into CSV, Excel, JSON, Parquet, and SQLite.
 
-FM26 is Unity-based. A Windows-only BepInEx plugin can export live player-list UI data, but **macOS BepInEx IL2CPP support is uncertain** for FM26. This tool takes a safer, reliable path: you export what you see in-game, and this tool parses the saved HTML.
+This tool takes a safe, reliable path: you export what you see in-game, and this CLI parses the saved HTML.
 
 ## How to export from FM26 on Mac
 
@@ -21,10 +21,10 @@ fm26-export export-xlsx ~/Downloads/players.html
 fm26-export inspect-columns ~/Downloads/players.html
 ```
 
-## Why this approach is safer than BepInEx on Mac
+## Why Web Page export
 
 - **No game modification** — FM files are never touched.
-- **No runtime injection** — avoids fragile IL2CPP hooking on macOS.
+- **No runtime injection** — nothing hooks into the game process.
 - **No memory patching or save-file parsing** — only reads HTML you explicitly exported.
 - **Matches what you see** — exports reflect your active FM view and column layout.
 - **Easy to audit** — HTML is plain text you can open and inspect.
@@ -102,22 +102,9 @@ tests/
   test_normalize.py
 ```
 
-## Experimental BepInEx Plugin Research
+## Screenshot OCR export (alternative)
 
-Runtime export via BepInEx **may** be possible on Mac only if all of the following are true:
-
-1. BepInEx 6 for Unity IL2CPP successfully boots with FM26 on macOS.
-2. A compatible FM26 export plugin loads without crashing the game.
-3. `BepInEx/LogOutput.log` is created and shows the plugin initialized.
-
-If `LogOutput.log` is missing or BepInEx fails to inject, assume **runtime plugin export is not available on your Mac build**. In that case, use the manual Web Page export workflow above — it is the supported, reliable path for this tool.
-
-A staged research probe lives in [`bepinex_probe/`](bepinex_probe/README.md):
-
-```bash
-python3 bepinex_probe/scripts/detect_fm26_backend.py --app-path "/path/to/Football Manager 26"
-python3 bepinex_probe/scripts/detect_bepinex_install.py --app-path "/path/to/Football Manager 26.app"
-```
+For screenshot-based extraction without HTML exports, see [`fm26-screenshot-exporter/`](fm26-screenshot-exporter/README.md) (`fm26-ocr` CLI).
 
 This project does **not** implement memory patching, save-file parsing, DRM bypassing, or any modification of FM game files.
 

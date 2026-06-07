@@ -49,8 +49,3 @@ screenshots/
 .pytest_cache/
 htmlcov/
 .coverage
-
-# BepInEx probe build output
-bepinex_probe/dist/
-bepinex_probe/src/**/bin/
-bepinex_probe/src/**/obj/
