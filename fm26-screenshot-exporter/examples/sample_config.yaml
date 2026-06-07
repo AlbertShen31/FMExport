@@ -1,0 +1,49 @@
+# Example FM26 screenshot extraction profile.
+# Copy to profiles/ and tune crop + column boundaries with the debug command.
+
+name: my_custom_profile
+expected_columns:
+  - Name
+  - Age
+  - Position
+  - Club
+
+manual_crop:
+  x: 100
+  y: 200
+  width: 1600
+  height: 700
+
+header_y_range:
+  y_start: 0
+  y_end: 32
+
+row_height: 30
+row_y_tolerance: 10
+min_confidence: 55
+column_strategy: fixed_boundaries
+
+fixed_columns:
+  - name: Name
+    x_start: 0
+    x_end: 300
+  - name: Age
+    x_start: 300
+    x_end: 360
+  - name: Position
+    x_start: 360
+    x_end: 480
+  - name: Club
+    x_start: 480
+    x_end: 700
+
+value_normalizers:
+  Name: name
+  Age: age
+  Position: position
+  Club: club
+
+required_columns:
+  - Name
+
+upscale_factor: 2.0

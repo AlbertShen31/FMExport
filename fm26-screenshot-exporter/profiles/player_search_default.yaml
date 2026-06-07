@@ -1,0 +1,103 @@
+name: player_search_default
+expected_columns:
+  - Name
+  - Age
+  - Position
+  - Club
+  - Nationality
+  - Transfer Value
+  - Wage
+  - Contract Expires
+  - Apps
+  - Goals
+  - Assists
+  - Av Rat
+  - Yel
+  - Red
+
+# Adjust these coordinates using the debug overlay for your FM26 window size/skin.
+manual_crop:
+  x: 80
+  y: 180
+  width: 1760
+  height: 820
+
+header_y_range:
+  y_start: 0
+  y_end: 36
+
+row_height: 28
+row_y_tolerance: 12
+min_confidence: 50
+min_avg_confidence: 40
+min_rows: 5
+max_empty_cell_ratio: 0.5
+
+column_strategy: fixed_boundaries
+
+# Tune x_start/x_end per column using fm26-ocr debug output.
+fixed_columns:
+  - name: Name
+    x_start: 0
+    x_end: 220
+  - name: Age
+    x_start: 220
+    x_end: 270
+  - name: Position
+    x_start: 270
+    x_end: 360
+  - name: Club
+    x_start: 360
+    x_end: 520
+  - name: Nationality
+    x_start: 520
+    x_end: 640
+  - name: Transfer Value
+    x_start: 640
+    x_end: 760
+  - name: Wage
+    x_start: 760
+    x_end: 880
+  - name: Contract Expires
+    x_start: 880
+    x_end: 1020
+  - name: Apps
+    x_start: 1020
+    x_end: 1080
+  - name: Goals
+    x_start: 1080
+    x_end: 1140
+  - name: Assists
+    x_start: 1140
+    x_end: 1200
+  - name: Av Rat
+    x_start: 1200
+    x_end: 1280
+  - name: Yel
+    x_start: 1280
+    x_end: 1330
+  - name: Red
+    x_start: 1330
+    x_end: 1400
+
+value_normalizers:
+  Name: name
+  Age: age
+  Position: position
+  Club: club
+  Nationality: nationality
+  Transfer Value: currency
+  Wage: wage
+  Contract Expires: date
+  Apps: number
+  Goals: number
+  Assists: number
+  Av Rat: number
+  Yel: number
+  Red: number
+
+required_columns:
+  - Name
+  - Age
+
+upscale_factor: 2.0
