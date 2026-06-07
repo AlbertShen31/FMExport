@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fm26-export-tool"
+version = "0.1.0"
+description = "macOS-first Football Manager 2026 stats export tool — converts FM Web Page exports to CSV, Excel, JSON, and more."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "FMExport Contributors" }]
+keywords = ["football-manager", "fm26", "export", "csv", "macos"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Games/Entertainment :: Simulation",
+]
+dependencies = [
+    "beautifulsoup4>=4.12.0",
+    "click>=8.1.0",
+    "lxml>=5.0.0",
+    "openpyxl>=3.1.0",
+    "pandas>=2.2.0",
+    "watchdog>=4.0.0",
+]
+
+[project.optional-dependencies]
+parquet = ["pyarrow>=15.0.0"]
+dev = [
+    "pytest>=8.0.0",
+    "pyarrow>=15.0.0",
+]
+
+[project.scripts]
+fm26-export = "fm26_export_tool.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["fm26_export_tool"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
